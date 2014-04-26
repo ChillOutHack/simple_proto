@@ -4,9 +4,14 @@
 // Wifi shield setup
 char ssid[] = "FBI Surveillance Van #42";     // the name of your network
 char pass[] = "44xzp44xzp";
-char host[] = "192.168.43.247";
+
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 byte postTo[] = {192,168,43,247};
+char host[] = "192.168.43.247";
+
+byte postTo2[] = {192,168,43,221};
+char host2[] = "192.168.43.221";
+
 WiFiClient postClient;
 WiFiServer server(80);
 
@@ -113,7 +118,8 @@ void loop(){
   }
   
   delay(5);
-  postToServer(peltier_level, pot_val, degreesF, host);
+  postToServer(peltier_level, pot_val, degreesF, host, postTo);
+  postToServer(peltier_level, pot_val, degreesF, host2, postTo2);
   
   analogWrite(peltier, peltier_level); //Write this new value out to the port
 }
@@ -123,24 +129,27 @@ void printFirmwareVersion(){
   Serial.println(WiFi.firmwareVersion());
 }
 
-void postToServer(float peltierVoltage, float potentiometerLevel, float temperature, char host[]){
-  if (postClient.connect(postTo, 80)) {
-      Serial.println("connected");
-      // Make a HTTP request:
-      postClient.print("GET /data?peltier=");
-      postClient.print(peltierVoltage);
-      postClient.print("&potentiometer=");
-      postClient.print(potentiometerLevel);
-      postClient.print("&temperature=");
-      postClient.print(temperature);
-      postClient.println(" HTTP/1.1");
-      postClient.print("Host: ");
-      postClient.println(host);
-      postClient.println("Connection: close");
-      postClient.println();
-  } else {
-    Serial.println("Could not get data from server");
-  }
+void postToServer(float peltierVoltage, float potentiometerLevel, float temperature, char host[], byte postTo[]){
+   for (int i = 0; i < 2; i++)
+   {
+      if (postClient.connect(postTo, 80)) {
+          Serial.println("connected");
+          // Make a HTTP request:
+          postClient.print("GET /data?peltier=");
+          postClient.print(peltierVoltage);
+          postClient.print("&potentiometer=");
+          postClient.print(potentiometerLevel);
+          postClient.print("&temperature=");
+          postClient.print(temperature);
+          postClient.println(" HTTP/1.1");
+          postClient.print("Host: ");
+          postClient.println(host);
+          postClient.println("Connection: close");
+          postClient.println();
+      } else {
+        Serial.println("Could not get data from server");
+      }
+   }
 }
 
 void printMacAddress() {
