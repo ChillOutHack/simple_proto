@@ -1,9 +1,17 @@
- const int tmp_pin = A2; //Analog pin for the TMP36
+ const int tmp_pin = A5; //Analog pin for the TMP36
  const int vibe_pin = 11; //Digital pin for motor
+ const int num_readings = 10; //Number of readings to average for smoothing
+
+int readings[num_readings]; //Define the array and initial values for all variables
+int index = 0;
+int total = 0;
+int average = 0;
 
 void setup(){
   Serial.begin(9600); //Start the serial connection in order to print outputs to the serial monitor
   pinMode(vibe_pin, OUTPUT); //Assign pin 11 as output
+  for (int this_reading = 0; this_reading < num_readings; this_reading++)
+    readings[this_reading] = 0;
 }
 
 void loop(){
@@ -13,7 +21,17 @@ void loop(){
   float tempC = (voltage - 0.33) * 100; //Convert from 10mV per degree with 500 mV offset
   float tempF = (tempC * (9/5)) + 32; //Now convert to 'F
 
-  if(tempF > 70.0){
+  total = total - readings[index];
+  readings[index] = tempF;
+  total = total + readings[index];
+  index = index + 1;
+
+  if (index >= num_readings)
+    index = 0;
+
+  average = total / num_readings;
+
+  if(average > 70.0){
     digitalWrite(vibe_pin, HIGH);
   }  
   else{
@@ -27,6 +45,8 @@ void loop(){
   Serial.print(tempC); Serial.print(" degrees C, ");
   // Print tempF to serial
   Serial.print(tempF); Serial.println(" degrees F");
+  // Print average tempF
+  Serial.print(average); Serial.println(" average");
 
   delay(1000);
 }
