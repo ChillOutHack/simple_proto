@@ -6,11 +6,11 @@ char ssid[] = "FBI Surveillance Van #42";     // the name of your network
 char pass[] = "44xzp44xzp";
 
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
-byte postTo[] = {192,168,43,247};
-char host[] = "192.168.43.247";
+byte postTo[] = {192,168,43,207};
+char host[] = "192.168.43.207";
 
-byte postTo2[] = {192,168,43,221};
-char host2[] = "192.168.43.221";
+byte postTo2[] = {192,168,43,247};
+char host2[] = "192.168.43.247";
 
 WiFiClient postClient;
 WiFiServer server(80);
@@ -130,12 +130,12 @@ void printFirmwareVersion(){
 }
 
 void postToServer(float peltierVoltage, float potentiometerLevel, float temperature, char host[], byte postTo[]){
-   for (int i = 0; i < 2; i++)
+   for (int i = 0; i < 1; i++)
    {
-      if (postClient.connect(postTo, 80)) {
+      if (postClient.connect(postTo, 5000)) {
           Serial.println("connected");
           // Make a HTTP request:
-          postClient.print("GET /data?peltier=");
+          postClient.print("GET /api/data?peltier=");
           postClient.print(peltierVoltage);
           postClient.print("&potentiometer=");
           postClient.print(potentiometerLevel);
