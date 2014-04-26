@@ -4,8 +4,9 @@
 // Wifi shield setup
 char ssid[] = "FBI Surveillance Van #42";     // the name of your network
 char pass[] = "44xzp44xzp";
+char host[] = "192.168.43.247";
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
-byte postTo[] = {74, 125, 131, 104};
+byte postTo[] = {192,168,43,247};
 WiFiClient postClient;
 WiFiServer server(80);
 
@@ -14,6 +15,7 @@ int peltier = 3; //The N-Channel MOSFET is on digital pin 3
 int power = 0; //Power level fro 0 to 99%
 int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
 int const pot_pin = A0; //The pot input is Analog 0
+int const temp_pin = A5;
 int pot_val; // This is the value of the pot, with a range of 0 - 1023
 
 void setup() {
@@ -40,7 +42,23 @@ void loop(){
 
   pot_val = analogRead(pot_pin);
   power = map(pot_val, 0, 1023, 0, 99);
-  peltier_level = map(power, 0, 99, 0, 255);
+  peltier_level = map(power, 0, 99, 0, 200);
+  
+  // Code to get temp
+  float voltage, degreesC, degreesF;
+  float rawVoltage = analogRead(temp_pin);
+  voltage = rawVoltage * 3.3;
+  voltage/= 1024.0;
+  degreesC = (voltage - 0.33) * 100.0;
+  degreesF = degreesC * (9.0/5.0) + 32.0;
+  Serial.print("Raw voltage: ");
+  Serial.print(rawVoltage);
+  Serial.print(" Voltage: ");
+  Serial.print(voltage);
+  Serial.print(" degreesC: ");
+  Serial.print(degreesC);
+  Serial.print(" degreesF: ");
+  Serial.println(degreesF);
   
   // listen for incoming clients
   WiFiClient client = server.available();
@@ -64,17 +82,15 @@ void loop(){
           client.println();
           client.println("<!DOCTYPE HTML>");
           client.println("<html>");
-          // output the value of each analog input pin
-          for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
-            int sensorReading = analogRead(analogChannel);
-            client.print("analog input ");
-            client.print(analogChannel);
-            client.print(" is ");
-            client.print(sensorReading);
-            client.println("<br />");       
-          }
+          client.print("Pentiometer setting: ");
+          client.println(pot_val);
+          client.print("<br/>");
           client.print("Peltier level is ");
           client.println(peltier_level);
+          client.print("<br/>");
+          client.print("Temperature is: ");
+          client.println(degreesF);
+          client.print("<br/>");
           client.println("</html>");
            break;
         }
@@ -96,11 +112,10 @@ void loop(){
     Serial.println("client disonnected");
   }
   
-
+  delay(5);
+  postToServer(peltier_level, pot_val, degreesF, host);
   
   analogWrite(peltier, peltier_level); //Write this new value out to the port
-  
-
 }
 
 void printFirmwareVersion(){
@@ -108,12 +123,19 @@ void printFirmwareVersion(){
   Serial.println(WiFi.firmwareVersion());
 }
 
-void postToServer(){
+void postToServer(float peltierVoltage, float potentiometerLevel, float temperature, char host[]){
   if (postClient.connect(postTo, 80)) {
       Serial.println("connected");
       // Make a HTTP request:
-      postClient.println("GET /search?q=arduino HTTP/1.1");
-      postClient.println("Host: www.google.com");
+      postClient.print("GET /data?peltier=");
+      postClient.print(peltierVoltage);
+      postClient.print("&potentiometer=");
+      postClient.print(potentiometerLevel);
+      postClient.print("&temperature=");
+      postClient.print(temperature);
+      postClient.println(" HTTP/1.1");
+      postClient.print("Host: ");
+      postClient.println(host);
       postClient.println("Connection: close");
       postClient.println();
   } else {
