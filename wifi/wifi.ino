@@ -135,7 +135,7 @@ void postToServer(float peltierVoltage, float potentiometerLevel, float temperat
       if (postClient.connect(postTo, 5000)) {
           Serial.println("connected");
           // Make a HTTP request:
-          postClient.print("GET /api/data?peltier=");
+          postClient.print("GET /api/update?peltier=");
           postClient.print(peltierVoltage);
           postClient.print("&potentiometer=");
           postClient.print(potentiometerLevel);
